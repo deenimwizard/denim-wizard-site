@@ -1,9 +1,11 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>The Denim Wizard</title>
+  <title>Band Recs by the Denim Wizard</title>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
   <style>
-    body { 
+    body {
       background: radial-gradient(circle at center, #1a1a2e, #000);
       color: white;
       font-family: 'Courier New', monospace;
@@ -19,7 +21,7 @@
       text-align: center;
       margin-bottom: 20px;
     }
-    input, textarea {
+    input, textarea, select {
       width: 100%;
       margin-bottom: 10px;
       background: #222;
@@ -46,24 +48,38 @@
       font-size: 0.9em;
       color: #7fff7f;
     }
-    @keyframes floatIn {
-      from { transform: translateY(10px); opacity: 0; }
-      to { transform: translateY(0); opacity: 1; }
+    #game-box {
+      border: 1px solid #888;
+      padding: 10px;
+      margin-top: 20px;
+      background-color: #111;
     }
   </style>
-  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
 </head>
 <body>
-  <h1>🧙 The Denim Wizard</h1>
+  <h1>Band Recommendations from the Denim Wizard</h1>
   <div class="quote" id="quote"></div>
 
-  <h2>Speak a Spell</h2>
+  <h2>Drop a Band Recommendation</h2>
   <input type="text" id="name" placeholder="Your name">
-  <textarea id="message" placeholder="Your spell, story, or wisdom..."></textarea>
+  <textarea id="message" placeholder="Recommend a band or album..."></textarea>
   <button onclick="submitComment()">Cast Your Comment</button>
 
   <div id="comments"></div>
+
+  <h2>Live Chat</h2>
+  <input type="text" id="chat-name" placeholder="Your name">
+  <input type="text" id="chat-message" placeholder="Say something cool...">
+  <button onclick="sendChat()">Send</button>
+  <div id="chat-box"></div>
+
+  <h2>Denim Wizard's Text Adventure</h2>
+  <div id="game-box">
+    <p><strong>Available commands:</strong> look, enter, throne, vault</p>
+    <p id="game-text">You're standing at the gates of the ancient Denim Castle. What do you do?</p>
+    <input type="text" id="game-input" placeholder="Type a command...">
+    <button onclick="playGame()">Enter</button>
+  </div>
 
   <script>
     const firebaseConfig = {
@@ -75,16 +91,16 @@
       appId: "1:736111959139:web:9a42c3d5a279e220e9ec56",
       measurementId: "G-L4TM1QHF6B"
     };
-
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
+    const chatDb = db.collection("chat");
 
     const quotes = [
-      "The denim chooses the wizard.",
-      "Speak now or forever hold your jorts.",
-      "Every stitch holds a secret.",
-      "The threads of fate are acid-washed.",
-      "In ripped cloth, truth is revealed."
+      "Have you listened to that obscure '84 demo yet?",
+      "Riffs are the real magic.",
+      "Every glam wizard needs a soundtrack.",
+      "No robe is complete without power chords.",
+      "Turn up the volume, not your nose."
     ];
     document.getElementById("quote").textContent = quotes[Math.floor(Math.random() * quotes.length)];
 
@@ -102,14 +118,14 @@
         return;
       }
       if (containsBadWords(name) || containsBadWords(message)) {
-        alert("🧙‍♂️ The Wizard forbids foul language!");
+        alert("The Wizard forbids foul language!");
         return;
       }
       db.collection("comments").add({
         name: name,
         message: message,
         timestamp: new Date(),
-        reply: "" // empty wizard reply for now
+        reply: ""
       });
       document.getElementById('name').value = "";
       document.getElementById('message').value = "";
@@ -124,12 +140,72 @@
         div.className = "comment";
         div.innerHTML = `<strong>${data.name}</strong><br>${data.message}`;
         if (data.reply) {
-          div.innerHTML += `<div class='wizard-reply'>🧙 Wizard Replies: ${data.reply}</div>`;
+          div.innerHTML += `<div class='wizard-reply'>Wizard Replies: ${data.reply}</div>`;
         }
         comments.appendChild(div);
       });
     });
+
+    function sendChat() {
+      const name = document.getElementById("chat-name").value.trim();
+      const message = document.getElementById("chat-message").value.trim();
+      if (!name || !message) {
+        alert("Say something, denim sorcerer.");
+        return;
+      }
+      if (containsBadWords(name) || containsBadWords(message)) {
+        alert("The Wizard forbids foul language!");
+        return;
+      }
+      chatDb.add({
+        name: name,
+        message: message,
+        timestamp: new Date()
+      });
+      document.getElementById("chat-message").value = "";
+    }
+
+    chatDb.orderBy("timestamp", "asc").onSnapshot(snapshot => {
+      const chatBox = document.getElementById("chat-box");
+      chatBox.innerHTML = "";
+      snapshot.forEach(doc => {
+        const data = doc.data();
+        const msg = document.createElement("div");
+        msg.textContent = `${data.name}: ${data.message}`;
+        chatBox.appendChild(msg);
+      });
+    });
+
+    function playGame() {
+      const input = document.getElementById("game-input").value.toLowerCase();
+      const output = document.getElementById("game-text");
+      let points = parseInt(localStorage.getItem("points")) || 0;
+
+      if (input.includes("look")) {
+        output.textContent = "You see towering denim walls and hear faint echoes of synth solos.";
+        points += 1;
+      } else if (input.includes("enter")) {
+        output.textContent = "You push open the massive doors. Inside, neon torches flicker. There are paths to the 'throne room' or 'record vault'.";
+        points += 2;
+      } else if (input.includes("throne")) {
+        output.textContent = "You find the Throne of Threads, a chair woven from denim tour jackets. A wizard's cape lies here.";
+        points += 3;
+      } else if (input.includes("vault")) {
+        output.textContent = "Stacks of records line the walls. A glowing one from '1984' hums softly.";
+        points += 3;
+      } else if (input.includes("1984")) {
+        output.textContent = "Hidden passage unlocked! You've discovered the forbidden glam dungeon filled with rare records and rhinestones! Bonus points!";
+        points += 10;
+      } else {
+        output.textContent = "The wind howls. Try another command.";
+      }
+
+      localStorage.setItem("points", points);
+      output.textContent += `\n(Points: ${points})`;
+      document.getElementById("game-input").value = "";
+    }
   </script>
 </body>
 </html>
+
 
