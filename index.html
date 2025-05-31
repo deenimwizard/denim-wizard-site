@@ -50,12 +50,6 @@
       from { transform: translateY(10px); opacity: 0; }
       to { transform: translateY(0); opacity: 1; }
     }
-    #mixtape {
-      display: block;
-      margin: 20px auto;
-      text-align: center;
-      color: #ffa;
-    }
   </style>
   <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
@@ -70,8 +64,6 @@
   <button onclick="submitComment()">Cast Your Comment</button>
 
   <div id="comments"></div>
-
-  <a id="mixtape" href="https://open.spotify.com/playlist/37i9dQZF1DX5cZuAHLNjGz" target="_blank">🎸 Hear the Wizard's Mixtape</a>
 
   <script>
     const firebaseConfig = {
