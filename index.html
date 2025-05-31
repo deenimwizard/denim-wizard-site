@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Denim Wizard Comment Wall</title>
+  <style>
+    body { background: #111; color: white; font-family: monospace; padding: 20px; }
+    input, textarea { width: 100%; margin-bottom: 10px; background: #222; color: white; border: 1px solid #555; padding: 8px; }
+    button { background: #444; color: white; padding: 10px; border: none; cursor: pointer; }
+    .comment { background: #1a1a1a; padding: 10px; margin-top: 10px; border-left: 4px solid #bada55; }
+  </style>
+  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
+</head>
+<body>
+
+<h2>⚡ Speak to the Denim Wizard ⚡</h2>
+
+<input type="text" id="name" placeholder="Your name">
+<textarea id="message" placeholder="Your message to the Wizard"></textarea>
+<button onclick="submitComment()">Cast Your Comment</button>
+
+<div id="comments"></div>
+
+<script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyAFT9vt7ECUtq9hgG0AQTCs_5ZW3oyXTSo",
+    authDomain: "thedenimwizard-2dc44.firebaseapp.com",
+    projectId: "thedenimwizard-2dc44",
+    storageBucket: "thedenimwizard-2dc44.firebasestorage.app",
+    messagingSenderId: "736111959139",
+    appId: "1:736111959139:web:9a42c3d5a279e220e9ec56",
+    measurementId: "G-L4TM1QHF6B"
+  };
+
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.firestore();
+
+  function submitComment() {
+    const name = document.getElementById('name').value;
+    const message = document.getElementById('message').value;
+    if (name && message) {
+      db.collection("comments").add({ name, message, timestamp: new Date() });
+      document.getElementById('name').value = "";
+      document.getElementById('message').value = "";
+    }
+  }
+
+  db.collection("comments").orderBy("timestamp", "desc").onSnapshot(snapshot => {
+    const comments = document.getElementById("comments");
+    comments.innerHTML = "";
+    snapshot.forEach(doc => {
+      const data = doc.data();
+      const div = document.createElement("div");
+      div.className = "comment";
+      div.innerHTML = `<strong>${data.name}</strong><br>${data.message}`;
+      comments.appendChild(div);
+    });
+  });
+</script>
+
+</body>
+</html>
