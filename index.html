@@ -1,62 +1,143 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Denim Wizard Comment Wall</title>
+  <title>The Denim Wizard</title>
   <style>
-    body { background: #111; color: white; font-family: monospace; padding: 20px; }
-    input, textarea { width: 100%; margin-bottom: 10px; background: #222; color: white; border: 1px solid #555; padding: 8px; }
-    button { background: #444; color: white; padding: 10px; border: none; cursor: pointer; }
-    .comment { background: #1a1a1a; padding: 10px; margin-top: 10px; border-left: 4px solid #bada55; }
+    body { 
+      background: radial-gradient(circle at center, #1a1a2e, #000);
+      color: white;
+      font-family: 'Courier New', monospace;
+      padding: 20px;
+      overflow-x: hidden;
+    }
+    h1, h2 {
+      text-align: center;
+      font-weight: normal;
+    }
+    .quote {
+      font-style: italic;
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    input, textarea {
+      width: 100%;
+      margin-bottom: 10px;
+      background: #222;
+      color: white;
+      border: 1px solid #555;
+      padding: 8px;
+    }
+    button {
+      background: #444;
+      color: white;
+      padding: 10px;
+      border: none;
+      cursor: pointer;
+    }
+    .comment {
+      background: rgba(255,255,255,0.05);
+      padding: 10px;
+      margin-top: 10px;
+      border-left: 4px solid #bada55;
+      animation: floatIn 0.5s ease;
+    }
+    .wizard-reply {
+      margin-top: 5px;
+      font-size: 0.9em;
+      color: #7fff7f;
+    }
+    @keyframes floatIn {
+      from { transform: translateY(10px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+    #mixtape {
+      display: block;
+      margin: 20px auto;
+      text-align: center;
+      color: #ffa;
+    }
   </style>
   <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
 </head>
 <body>
+  <h1>🧙 The Denim Wizard</h1>
+  <div class="quote" id="quote"></div>
 
-<h2>⚡ Speak to the Denim Wizard ⚡</h2>
+  <h2>Speak a Spell</h2>
+  <input type="text" id="name" placeholder="Your name">
+  <textarea id="message" placeholder="Your spell, story, or wisdom..."></textarea>
+  <button onclick="submitComment()">Cast Your Comment</button>
 
-<input type="text" id="name" placeholder="Your name">
-<textarea id="message" placeholder="Your message to the Wizard"></textarea>
-<button onclick="submitComment()">Cast Your Comment</button>
+  <div id="comments"></div>
 
-<div id="comments"></div>
+  <a id="mixtape" href="https://open.spotify.com/playlist/37i9dQZF1DX5cZuAHLNjGz" target="_blank">🎸 Hear the Wizard's Mixtape</a>
 
-<script>
-  const firebaseConfig = {
-    apiKey: "AIzaSyAFT9vt7ECUtq9hgG0AQTCs_5ZW3oyXTSo",
-    authDomain: "thedenimwizard-2dc44.firebaseapp.com",
-    projectId: "thedenimwizard-2dc44",
-    storageBucket: "thedenimwizard-2dc44.firebasestorage.app",
-    messagingSenderId: "736111959139",
-    appId: "1:736111959139:web:9a42c3d5a279e220e9ec56",
-    measurementId: "G-L4TM1QHF6B"
-  };
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyAFT9vt7ECUtq9hgG0AQTCs_5ZW3oyXTSo",
+      authDomain: "thedenimwizard-2dc44.firebaseapp.com",
+      projectId: "thedenimwizard-2dc44",
+      storageBucket: "thedenimwizard-2dc44.firebasestorage.app",
+      messagingSenderId: "736111959139",
+      appId: "1:736111959139:web:9a42c3d5a279e220e9ec56",
+      measurementId: "G-L4TM1QHF6B"
+    };
 
-  firebase.initializeApp(firebaseConfig);
-  const db = firebase.firestore();
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
 
-  function submitComment() {
-    const name = document.getElementById('name').value;
-    const message = document.getElementById('message').value;
-    if (name && message) {
-      db.collection("comments").add({ name, message, timestamp: new Date() });
+    const quotes = [
+      "The denim chooses the wizard.",
+      "Speak now or forever hold your jorts.",
+      "Every stitch holds a secret.",
+      "The threads of fate are acid-washed.",
+      "In ripped cloth, truth is revealed."
+    ];
+    document.getElementById("quote").textContent = quotes[Math.floor(Math.random() * quotes.length)];
+
+    const bannedWords = ["fuck", "shit", "bitch", "asshole", "cunt", "dick", "bastard", "slut", "whore", "piss", "cock", "nigger", "faggot", "cum", "retard", "twat", "crap", "damn", "hell", "goddamn"];
+    function containsBadWords(text) {
+      const lower = text.toLowerCase();
+      return bannedWords.some(word => lower.includes(word));
+    }
+
+    function submitComment() {
+      const name = document.getElementById('name').value.trim();
+      const message = document.getElementById('message').value.trim();
+      if (!name || !message) {
+        alert("Don't leave it blank, traveler.");
+        return;
+      }
+      if (containsBadWords(name) || containsBadWords(message)) {
+        alert("🧙‍♂️ The Wizard forbids foul language!");
+        return;
+      }
+      db.collection("comments").add({
+        name: name,
+        message: message,
+        timestamp: new Date(),
+        reply: "" // empty wizard reply for now
+      });
       document.getElementById('name').value = "";
       document.getElementById('message').value = "";
     }
-  }
 
-  db.collection("comments").orderBy("timestamp", "desc").onSnapshot(snapshot => {
-    const comments = document.getElementById("comments");
-    comments.innerHTML = "";
-    snapshot.forEach(doc => {
-      const data = doc.data();
-      const div = document.createElement("div");
-      div.className = "comment";
-      div.innerHTML = `<strong>${data.name}</strong><br>${data.message}`;
-      comments.appendChild(div);
+    db.collection("comments").orderBy("timestamp", "desc").onSnapshot(snapshot => {
+      const comments = document.getElementById("comments");
+      comments.innerHTML = "";
+      snapshot.forEach(doc => {
+        const data = doc.data();
+        const div = document.createElement("div");
+        div.className = "comment";
+        div.innerHTML = `<strong>${data.name}</strong><br>${data.message}`;
+        if (data.reply) {
+          div.innerHTML += `<div class='wizard-reply'>🧙 Wizard Replies: ${data.reply}</div>`;
+        }
+        comments.appendChild(div);
+      });
     });
-  });
-</script>
-
+  </script>
 </body>
 </html>
+
